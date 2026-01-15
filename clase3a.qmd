@@ -1,0 +1,351 @@
+---
+title: "Clase 3a - Construcción de tablas"
+author: "José Rodríguez de la Fuente"
+format: 
+  html:
+    theme: cerulean
+    toc: true
+    toc-title: Contenido
+    number-sections: true
+    embed-resources: true
+    smooth-scroll: true
+    code-overflow: wrap
+    code-copy: hover
+    code-tools: false
+  pdf: 
+    toc: true
+    pdf-engine: xelatex
+    fig-format: png  
+    fig-dpi: 300     
+    fig-width: 8
+    fig-height: 5
+    highlight-style: espresso
+    include-in-header: 
+       text: |
+         \usepackage{fvextra}
+         \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+         \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
+lang: es
+highlight-style: espresso
+lightbox: true
+cache: true
+execute:
+  warning: false
+  message: false
+---
+
+
+# Construcción de tablas
+
+En esta apartado revisaremos distintas aproximaciones a la construcción de tablas de frecuencias y de tablas de contingencia. Quizás `R` no se destaque por la simpleza del análisis exploratorio a través de tablas, pero existen infinidad de paquetes que nos permitirán llegar a resultados similares. Empezaremos explorando la funciones disponibles en **R base**, luego revisaremos algunos paquetes que harán la mayor parte del trabajo por nosotros y, por último, veremos cómo podemos hacerlo con `dplyr` y `tidyr` de `tidyverse`.  
+
+Para este apartado utilizaremos la base de individuos de la EPH de 2025. 
+
+
+```{r}
+library(eph)
+
+eph_ind <- get_microdata(year = 2025, period = 2, type = "individual") 
+eph_hog <- get_microdata(year = 2025, period = 2, type = "hogar")
+
+
+```
+
+Por otro lado, vamos a trabajar con las siguientes variables que transformaremos en factor:  
+
+```{r}
+library(tidyverse)
+
+eph_ind <- eph_ind %>%
+  mutate(
+    region_f = factor(REGION, labels = c("Gran Buenos Aires", "Noroeste", "Noreste", "Cuyo", "Pampeana", "Patagonia")),
+    sexo_f = factor(CH04, labels = c("Varón", "Mujer")),
+    estado_f = factor(ESTADO, labels = c("No realizada", "Ocupado", "Desocupado", "Inactivo", "Menor de 10 años")),
+    empleo_f = factor(EMPLEO, labels = c("Formal", "Informal", "Ns/Nc")))
+```
+
+
+## La función `table()`
+
+La función `table()` es una de las más utilizadas para la construcción de tablas de frecuencias rápidas, tanto para el análisis univariable como bivariable. Por ejemplo, a partir de las variables *estado_f* (Condición de actividad) y *region_f*. 
+
+```{r}
+table(eph_ind$estado_f)
+
+table(eph_ind$estado_f, eph_ind$region_f)
+```
+
+
+Si queremos calcular las proporciones o frecuencias relativas, podemos llamar a la función `prop.table()` sobre la función ya especificada. La opción `margin = 2` indica que queremos calcular los porcentajes por columna.  
+
+```{r}
+prop.table(table(eph_ind$estado_f, eph_ind$region_f), margin = 2)
+```
+
+Por último, si queremos presentar los resultados en porcentajes, lo multiplicamos por 100:
+
+```{r}
+prop.table(table(eph_ind$estado_f, eph_ind$region_f), margin = 2) * 100
+```
+
+Como verán, la función `table()` es muy útil para la construcción rápida de tablas de frecuencias, pero no nos permite realizar análisis complementarios, ni nos otorgan una salida en formato **tidy**.
+
+:::{.callout-tip title="Sentido de los porcentajes"}
+Por regla general, cuando en una relación entre dos variables podemos establecer que hay una que funciona como independiente y otra como dependiente, solemos ubicar a la primera en la columna y a la segunda en las filas. Al mismo tiempo, los porcentajes suelen calcularse en el sentido de la variable independiente, quedando el 100% en la fila final.  
+Esto no invalida que, en algunos casos, podamos calcular los porcentajes por fila. Por ejemplo, si queremos conocer la distribución de género por rama de conocimiento.
+:::
+
+
+## Algunas librerías para la construcción de tablas
+
+A veces necesitamos hacer procesamientos rápidos, sin necesidad de escribir mucho código. Si nuestra opción es quedarnos usando `R` y no ~~huir~~ migrar a otros programas, podemos utilizar algunas librerías que nos facilitarán la construcción de tablas. Les dejamos una lista con la variedad de librerías que pueden utilizar:
+
+-   `janitor`
+-   `expss`
+-   `summarytools`
+-   `gmodels`
+-   `sjmisc`
+
+Vamos a realizar una primera prueba utilizando la librería `sjmisc`. En primer lugar, la función `frq()` nos devuelve una tabla de frecuencias algo más completa que la función `table()`. Por su parte, tiene la opción *sort.frq* que nos permite ordenar las categorías en forma ascendente o descendente y *weights* que nos permitirá indicar el ponderador. Vamos a probar con la variable *region_f*.
+
+```{r eval=FALSE}
+install.packages("sjmisc")
+```
+
+
+```{r eval=FALSE}
+library(sjmisc)
+
+eph_ind %>% 
+  frq(region_f, sort.frq = "desc", weights = PONDERA)
+
+```
+
+```{r echo=FALSE}
+#| execute: 
+#|   if: html
+
+library(sjmisc)
+
+eph_ind %>% 
+  frq(region_f, sort.frq = "desc", out = "browser", weights = PONDERA)
+```
+
+El mismo paquete nos permite realizar tablas cruzadas con la función `flat_table`.
+
+```{r}
+eph_ind %>% 
+  flat_table(region_f, empleo_f, margin = "row", weights = PONDERA)
+```
+
+
+## Tablas con `dplyr` y `tidyr`
+
+Si bien las librerías anteriores nos permiten realizar tablas de frecuencias de forma rápida y sencilla, no siguen la filosofía del `tidyverse` que venimos utilizando y que nos servirá para trabajar en forma ordenada en cada momento de la investigación. Quizás, a principio, la elaboración de tablas con estás funciones sea algo complicado, pero a futuro nos facilitará la posterior presentación de los resultados en documentos o en gráficos.
+
+La secuencia de pasos es similar a como lo hemos hecho en el apartado de **variables agregadas**. Primero agrupamos la información (`group_by()`) y luego contamos los casos. Esto último podemos hacerlo mediante la función `summarise()`, `count()` o `tally()`.  
+
+La función `count()` no necesita de la función `group_by()`, ya que cuenta los casos por grupos automáticamente. Por su parte, `tally()` necesita que previamente agrupemos la información con `group_by()`, pero a futuro nos permitirá hacer conteos ponderados.
+
+```{r}
+eph_ind %>% 
+  group_by(region_f) %>% 
+  summarise(frecuencia = n())
+
+eph_ind %>%
+  count(region_f)
+
+eph_ind %>%
+  group_by(region_f) %>%
+  tally()
+
+```
+
+Para realizar tablas bivariadas, lo primero que adicionaremos es la segunda variable a la función `count()` utilizando la función `wt = PONDERA` para obtener los conteos ponderados. 
+
+```{r}
+eph_ind %>% 
+  count(empleo_f, sexo_f, wt = PONDERA)
+
+```
+
+Como verán, la tabla se nos presenta en un formato extraño, que se denomina *long* o largo, debido a que las dos variables de interés se sitúan en las primeras columnas y las frecuencias en la última. En algunos casos, como por ejemplo para la construcción de gráficos, este formato es apropiado. Pero para la presentación de tablas, necesitamos un formato de tipo *wide* o ancho.
+
+Para presentar la tabla en un formato más amigable, utilizaremos la función `pivot_wider` de `tidyr`. Lo que debemos declarar en dicha función es cual es la variable que pasará a mostrar sus categorías en las columnas y de dónde surgirán los valores que irán en las celdas. En nuestro caso, las columnas se completarán con las categorías de la variable `sexo_f` y los valores serán las frecuencias de los conteos de la variable `n` que construimos en el paso anterior. Aprovecharemos para filtrar los casos que se encuentran ocupados en el mercado de trabajo.
+
+```{r}
+eph_ind %>% 
+  filter(estado_f == "Ocupado") %>%
+  count(empleo_f, sexo_f, wt = PONDERA) %>% 
+  pivot_wider(names_from = sexo_f, values_from = n)
+```
+
+Como se vera, la tabla se presenta de forma más ordenada y clara, sin embargo, aún no hemos calculado las proporciones. Para ello, la librería [`janitor`](https://sfirke.github.io/janitor/index.html){target="_blank"} automáticamente nos calculará distintos tipos de proporciones, nos presentará los datos en formato porcentual y nos dejará agregar los totales por fila o columna. Exploremos la librería.
+
+```{r eval=FALSE}
+install.packages("janitor")
+
+```
+
+
+```{r}
+library(janitor)
+
+eph_ind %>% 
+  filter(estado_f == "Ocupado") %>%
+  count(empleo_f, sexo_f, wt = PONDERA) %>% 
+  pivot_wider(names_from = sexo_f, values_from = n) %>% 
+  adorn_totals("col") %>% # Agregamos los totales por columna
+  adorn_percentages("col") %>% # Calculamos las proporciones por columna
+  adorn_pct_formatting(digits = 1) # Presentamos los valores en formato porcent
+
+```
+
+### El formato *tidy*
+
+Disponer los datos en forma ordenada implica que: 1) cada variable es una columna, 2) cada observación es una fila y 3) cada valor se encuentra en una celda. Sin embargo muchas veces, los datos distan de presentarse en ficho formato. Por ejemplo, es frecuente que:  
+
+- los encabezados de las columnas sean valores,
+- muchas variables sean guardadas en una columna,
+- las variables se encuentren en las filas y columnas, 
+- múltiples unidades de análisis se encuentren en una misma tabla,
+- una unidad de análisis se encuentre en varias tablas.  
+
+Para resolver estos problemas, `tidyr` nos ofrece las funciones `pivot_longer()` y `pivot_wider()`. La primera nos permite pasar de un formato ancho a uno largo, mientras que la segunda nos permite pasar de un formato largo a uno ancho.
+
+![Formato ancho](imagenes/pivot_longer.png){width="80%"}
+
+`pivot_longer()` nos permite pasar de un formato ancho a uno largo. Para ello, debemos especificar las columnas que queremos mantener y las que queremos transformar en filas. Con la función *names_to* especificamos el nombre de la nueva columna que contendrá los nombres de las columnas que estamos transformando en filas, y con *values_to* especificamos el nombre de la nueva columna que contendrá los valores de las columnas que estamos transformando en filas.
+
+![Formato largo](imagenes/pivot_wider.png){width="80%"}
+
+`pivot_wider()` nos permite pasar de un formato largo a uno ancho. Para ello, debemos especificar las columnas que queremos mantener y las que queremos transformar en columnas. Con la función *names_from* especificamos el nombre de la nueva columna que contendrá los nombres de las columnas que estamos transformando en columnas, y con *values_from* especificamos el nombre de la nueva columna que contendrá los valores de las columnas que estamos transformando en columnas.
+
+
+# Exportando los resultados
+
+Hasta aquí hemos trabajado con tablas de frecuencias y con tablas de contingencia. Si lo que necesitamos es explorar los datos para conocer la información que disponemos, probar hipótesis o realizar análisis descriptivos, con las salidas gráficas que nos ofrece `RStudio` nos bastaría. Sin embargo, a veces, necesitamos presentar los resultados en informes, documentos o presentaciones. Para ello, necesitamos exportar los resultados a formatos comúnmente como xlsx, docx, pdf, etc.
+
+En esta sección vamos a mostrar algunas alternativas para exportar los resultados a una hoja de calculo (xlsx) y a un documento de texto (docx). No obstante, existen muchas otras opciones de exportación que pueden explorarse y que se complementan muy bien con el análisis estadístico en `RStudio`, tales como html o pdf.
+
+::: {.callout-tip title="Recomendación"}
+A lxs interesadxs les recomendamos revisar los sistemas de publicación científica tales como [`Quarto`](https://quarto.org/){target="_blank"} o [`R Markdown`](https://rmarkdown.rstudio.com/){target="_blank"}. Ambos sistemas permiten la integración de código `R` con texto, gráficos y tablas, y la exportación a distintos formatos de salida, permitiendo la creación de **documentos reproducibles**.  
+:::  
+
+![Flujos de trabajo reproducibles y no reproducibles. Fuente: https://biostats-r.github.io/biostats/quarto/](imagenes/quarto_workflow.png){width="80%"}
+
+## Exportando a xslx
+
+Para exportar los resultados a una hoja de cálculo, utilizaremos la librería `openxlsx`. Esta librería nos permite exportar los resultados a un archivo de `Excel`, añadir hojas de calculo, modificar el formato de las celdas, entre otras cosas. Vamos a revisar las funciones más sencillas del paquete. Para ello, crearemos un objeto con la tabla cruzada que creamos en la sección anterior. Vamos a crear una carpeta dentro del proyecto llamada *resultados* para guardar allí las tablas y gráficos generados.  
+
+
+```{r eval=FALSE}
+install.packages("openxlsx")
+```
+
+
+```{r}
+library(openxlsx)
+
+# Creamos un objeto con la tabla de frecuencias
+tabla1 <- eph_ind %>% 
+  filter(estado_f == "Ocupado") %>%
+  count(empleo_f, sexo_f, wt = PONDERA) %>% 
+  pivot_wider(names_from = sexo_f, values_from = n) %>% 
+  adorn_totals("col") %>% # Agregamos los totales por columna
+  adorn_percentages("col") %>% # Calculamos las proporciones por columna
+  adorn_pct_formatting(digits = 1) # Presentamos los valores en formato porcent
+
+# Exportamos la tabla a un archivo de Excel
+write.xlsx(tabla1, "resultados/tabla1.xlsx")
+```
+
+El resultado de la función `write.xlsx` fue la creación de un archivo en la carpeta *resultados* con el nombre tabla1.xlsx. Si abrimos el archivo, veremos que la tabla se ha exportado correctamente.
+
+![Ejemplo uso write.xlsx](imagenes/tabla1.png){width="100%"}
+
+Ahora bien, si dentro de nuestro flujo de trabajo construimos varias tablas y queremos exportarlas a un único archivo, podemos hacerlo creando un *workbook* con la función `createWorkbook()` y luego añadiendo las tablas con la función `addWorksheet()`. Veamos paso a paso cómo hacerlo. En la primera hoja pondremos la tabla que creamos anteriormente y en la segunda hoja incorporaremos la tabla que cruza la variable de informalidad por región.
+
+```{r}
+# Creamos un objeto con la tabla de informalidad por región
+tabla2 <- eph_ind %>% 
+  filter(estado_f == "Ocupado") %>%
+  count(empleo_f, region_f, wt = PONDERA) %>% 
+  pivot_wider(names_from = region_f, values_from = n) %>% 
+  adorn_totals("col") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting(digits = 1)
+
+# Creamos un workbook
+wb <- createWorkbook()
+
+# Añadimos la primera hoja
+addWorksheet(wb, sheetName = "Informalidad x sexo")
+
+# Escribimos la tabla en la primera hoja
+writeData(wb, sheet = "Informalidad x sexo", x = "Tipo de inserción laboral según sexo", startRow = 1)
+writeData(wb, sheet = "Informalidad x sexo", x = tabla1,
+          borders = "rows" , borderStyle = "dashed", startRow = 3)
+
+# Añadimos la segunda hoja
+addWorksheet(wb, sheetName = "Informalidad x región")
+
+# Escribimos la tabla en la segunda hoja
+writeData(wb, sheet = "Informalidad x región", x = "Tipo de inserción laboral según región", startRow = 1)
+writeData(wb, sheet = "Informalidad x región", x = tabla2, 
+          borders = "rows" , borderStyle = "medium", startRow = 3)
+
+# Guardamos el archivo
+saveWorkbook(wb, "resultados/tabla2.xlsx", overwrite = TRUE)
+
+
+```
+
+Como se ve, el archivo ahora tiene dos hojas, y en cada una de ellas encontramos las tablas que exportamos desde `RStudio`.
+
+![Ejemplo de construcción de hojas en archivo xlsx](imagenes/tabla2.png){width="100%"}
+
+## Exportando a docx
+
+Otra de las situaciones en la que nos podemos encontrar es ante la necesidad de exportar las tablas realizadas directamente a un archivo .docx en donde luego escribiremos texto. Para ello, utilizaremos la librería `flextable`, que nos permite no solo exportar las tablas, sino editarlas para que queden en un formato amigable para reportes, documentos, *papers*, etc.
+
+Nuevamente, esta librería funciona en formato *tidy* y permite el uso de *pipes*. Lo primero que vamos a hacer es tomar el objeto `tabla2` que creamos anteriormente y exportarlo a un archivo .docx. Para esto, utilizaremos primero la función `flextable()` para convertir la tabla en un objeto de tipo *flextable*.
+
+```{r eval=FALSE}
+install.packages("flextable")
+```
+
+
+```{r message=FALSE, warning=FALSE}
+library(flextable)
+
+flextable(tabla2)
+  
+```
+
+La librería incluye muchísimas funciones para editar y automatizar el formato de salida de las tablas. Por ejemplo, podemos cambiar el formato de las celdas, agregar títulos, subtítulos, notas al pie, entre otras cosas.
+
+::: {.callout-tip title="Recomendación"}
+Recomendamos revisar la página de la librería [`flextable`](https://ardata-fr.github.io/flextable-book/index.html){target="_blank"} para conocer las potencialidades que provee.
+:::
+
+Vamos a probar ahora agregar en la primera columna la etiqueta de la variable `disciplina_f` y en en una fila superior la etiqueta de la variable `genero_f`. Exploraremos algunas opciones de la función como `set_header_labels()`, `add_header_row()`, `add_footer_lines()`, `set_caption()`, `theme_vanilla()`, `align()` y `autofit()`. El resultado lo guardaremos en un objeto llamado `tabla_doc`.
+
+```{r}
+tabla_doc <- flextable(tabla2) %>% 
+  set_header_labels(empleo_f = "Tipo de inserción") %>% # coloco la etiqueta de la variable empleo_f en la primera columna
+  add_header_row(values = c("", "Región"), colwidths = c(1,7)) %>%  # coloco la etiqueta de la variable región en una fila superior
+  add_footer_lines(values = c("Fuente: elaboración propia en base a EPH-INDEC")) %>% # agrego una nota al pie
+  set_caption("Distribución de la población ocupada según inserción laboral por región. Argentina urbana, 2do trimestre 2025") %>% # agrego un título a la tabla
+  theme_vanilla() %>% # cambio el tema de la tabla
+  align(i = 1, part = "header", align = "center") %>% # centro el título de la tabla
+  autofit() # ajusto el ancho de las columnas automáticamente
+
+tabla_doc
+```
+
+Finalmente, para exportar la tabla a un archivo .docx, utilizaremos la función `save_as_docx()`, asignándole la carpeta donde queremos guardar el archivo y el nombre del mismo.
+
+```{r}
+save_as_docx(tabla_doc, path = "resultados/tabla2.docx")
+```
