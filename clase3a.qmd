@@ -1,5 +1,5 @@
 ---
-title: "Clase 3a - Construcción de tablas"
+title: "Clase 3a - Visualización de resultados"
 author: "José Rodríguez de la Fuente"
 format: 
   html:

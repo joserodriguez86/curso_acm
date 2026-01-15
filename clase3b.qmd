@@ -1,5 +1,5 @@
 ---
-title: "Clase 3b - Construcción de gráficos"
+title: "Clase 3b - Visualización de resultados"
 author: "José Rodríguez de la Fuente"
 format: 
   html:
