@@ -28,6 +28,7 @@ format:
 lang: es
 highlight-style: espresso
 lightbox: true
+bibliography: references.bib
 cache: true
 execute:
   warning: false

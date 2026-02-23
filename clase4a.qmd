@@ -1,0 +1,431 @@
+---
+title: "Clase 4a - Análisis de correspondencias múltiples"
+author: "José Rodríguez de la Fuente"
+format: 
+  html:
+    theme: cerulean
+    toc: true
+    toc-title: Contenido
+    number-sections: true
+    embed-resources: true
+    smooth-scroll: true
+    code-overflow: wrap
+    code-copy: hover
+    code-tools: false
+  pdf: 
+    toc: true
+    pdf-engine: xelatex
+    fig-format: png  
+    fig-dpi: 300     
+    fig-width: 8
+    fig-height: 5
+    highlight-style: espresso
+    include-in-header: 
+       text: |
+         \usepackage{fvextra}
+         \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+         \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
+lang: es
+highlight-style: espresso
+lightbox: true
+bibliography: references.bib
+cache: false
+execute:
+  warning: false
+  message: false
+---
+
+# Análisis de correspondencias múltiples: introducción  
+
+El **análisis de correspondencias múltiples** (ACM) forma parte de la familia de técnicas englobadas bajo el título de *análisis geométrico de datos* desarrollados por la escuela  francesa de análisis de datos [@Baranger2009; @LeRoux.Rouanet2010]. El espíritu de esta técnica es hacer emerger las dimensiones fundamentales latentes de la estructura de interrelación existente entre las variables observadas, mediante su combinación y reducción. Por ejemplo, a partir de la consideración de seis variables, la técnica puede  señalarnos que existen dos dimensiones que, en su mayor medida, dan cuenta de la variabilidad  total del conjunto.  
+
+Específicamente, a partir del *ACM* se “analiza las relaciones de  interdependencia de un conjunto de variables cualitativas (nominales y ordinales), y expresa  sus asociaciones (correspondencias) en términos de un conjunto reducido de factores que  sintetizan las principales diferencias que se dan entre los individuos” [@Lopez-Roldan2012, p. 37]. Su alcance es más bien descriptivo y guiado por una filosofía  inductiva, ya que no se plantea un modelo para ser puesto a prueba a partir de los datos, sino que son los datos procesados a partir de la técnica los que permiten construir un modelo sobre lo indagado. A su vez, la técnica permite un *feedback* a través del cual el pasaje de los datos a la teoría y de la teoría a los datos es constante.  
+
+A diferencia de otras técnicas clásicas de análisis de variables (regresión, ANOVA, etc.), el *ACM* permite un adecuado abordaje del sistema completo de relaciones que se configuran en el espacio social [@Rouanet.etal2011]. De este modo, a partir de la técnica se configuran dos espacios: un espacio en el cual los individuos son ubicados (nube de puntos) y otro, de representación simultánea con el anterior, que despliega la complejidad de las relaciones estadísticas expresando relaciones sociales, es decir, el “espacio de propiedades". Este segundo espacio es al que se le prestará atención, ya que permite interpretar como se interrelacionan las distintas categorías de las variables consideradas (modalidades).  
+
+
+![Nubes de individuos y nube de categorías. Fuente: @LeRoux.Rouanet2010](imagenes/graficos_acm.png)  
+
+
+Los factores que surgen de la reducción producida sobre el espacio de propiedades de lasvariables originales permiten una explicación más parsimoniosa del problema a abordar. El primer factor-eje resume la mayor parte de la inercia (varianza) presentada entre los individuos, siendo éste el más relevante ya que es el que mejor se aproxima a la nube de puntos original. El segundo factor-eje, es independiente del primero y da cuenta de las diferenciaciones residuales que el primer factor no pudo representar y así sucesivamente con el resto de los  factores [@Baranger2009]. Si bien no hay un acuerdo respecto a cuantos factores retener para el análisis, es recomendable basarse en aquellos que acumulan la mayor parte de la inercia explicada (generalmente un 70% o más de la varianza).  
+
+Por otro lado, el ACM permite la incorporación de variables denominadas *suplementarias* o  *ilustrativas* que no intervienen en la construcción de los factores (como sí lo hacen las variables  activas) pero que permiten su proyección en el plano factorial y, por ende, el enriquecimiento  del análisis [@Adaszko2009; @LeRoux.Rouanet2010]. Según Bourdieu, las variables  suplementarias permiten “dar fuerza” a la demostración de que las variables activas son interpretables en términos de otras (en el caso de “La Distinción”, algunas variables de estatus social), pudiéndose hacer un uso explicativo del *ACM* [@Rouanet.etal2011].
+
+
+# El análisis de correspondencias múltiples en `R`
+
+Una de las librerías más utilizadas para la realización de análisis geométrico de datos es `FactoMiner`^[[http://factominer.free.fr/index.html](http://factominer.free.fr/index.html)] [@Le.etal2008] desarrollado por investigadores del *L'Institut Agro Rennes-Angers Unité Pédagogique de Mathématiques Appliquées*. Esta librería ha quedado algo desactualizada con los años, pero permite realizar análisis de componentes principales, análisis de correspondencias múltiples y *clustering*. También cuenta con la ventaja de contar con diversas salidas gráficas, permite el tratamiento de valores perdidos y tiene una interfaz interactiva para crear gráficos basada en `shiny`(factoshiny).  
+
+`GDAtools`^[[https://nicolas-robette.github.io/GDAtools/](https://nicolas-robette.github.io/GDAtools/)] [@Robette2025] es otra librería que permite la realización de *ACM*. Según su autor, Nicolas Robette, este paquete retoma algunas de las posibilidades que brinda `FactoMiner` y `ade4` (librería de análisis multivariable orientada a la ecología), pero incorporando variantes pensadas para las ciencias sociales. Su inspiración principal es el manual de @LeRoux.Rouanet2010.  
+
+![Le Roux, Brigitte, & Rouanet, Henry. (2010). Multiple correspondence analysis. Sage Publications.
+](imagenes/mca.jpg){width=50%}
+
+
+Esta librería tiene salidas similares a las que pueden tener otros programas clásicos como **SPAD**. Presenta tablas de ayuda a la interpretación de los factores (contribuciones, calidad de la representación y test-values), calcular elipsis de concentración, tiene una salida gráfica compatible con `ggplot2` y permite el posterior tratamiento con análisis de clústed jerárquico. Un tutorial de algunas de las funciones que probaremos en este curso puede encontrarse en [https://nicolas-robette.github.io/GDAtools/articles/GDA_tutorial.html](https://nicolas-robette.github.io/GDAtools/articles/GDA_tutorial.html).  
+
+
+## Construyendo y recodificando variables  
+
+En primer lugar, vamos a activar las librerías que utilizaremos en esta sesión. En el caso de GDAtools, si no la tienen instalada previamente, hacerlo mediante `install.packages("GDAtools")`.  
+
+```{r}
+library(tidyverse)
+library(eph)
+library(GDAtools)
+```
+
+Vamos a descargar la última versión de la EPH disponible al momento, correspondiente al tercer trimestre de 2025. Lo realizaremos tanto en su modalidad individual como de hogar.  
+
+```{r}
+eph_ind <- get_microdata(year = 2025, trimester = 3, type = "individual")
+eph_hog <- get_microdata(year = 2025, trimester = 3, type = "hogar")
+```
+
+Si queremos utilizar ambas en la realización del ACM será necesario unirlas. Este caso, para no perder información, vamos siempre a unir las variables de la base *hogar* a la de *individuos*. Para cada caso de la base de individuos tendremos la información relativa a su hogar. La forma más sencilla de realizar esta operación es mediante la función `left_join` de la librería `dplyr`.  
+
+Antes de unir las bases vamos a quedarnos sólo con las variables que nos interesan de la base de hogares. En este caso, las variables que funcionan como identificadoras (CODUSU y NRO_HOGAR) y V13, V14 y V15. 
+
+```{r}
+eph_hog <- eph_hog %>% 
+  select(CODUSU, NRO_HOGAR, V5_01, V13, V14, V15)
+
+eph_ind <- eph_ind %>%
+  left_join(eph_hog, by = c("CODUSU", "NRO_HOGAR"))
+```
+
+
+Ahora vamos a comenzar a construir las variables necesarias sobre las cuales realizaremos el ACM. Vamos a utilizar como guía la selección de algunos indicadores planteada en @Gutierrez.etal2021. Comencemos con las variables sociolaborales. La información laboral se identifica en la EPH en las variables *PP04D_COD* para los ocupados y en la *PP11D_COD* para los desocupados (última ocupación). Vamos a crear una única variable que se llame *CNO* donde guardemos la información de ambas situaciones y luego vamos a extraer las cuatro dimensiones (Carácter ocupacional, Jerarquía, Tecnología y Calificación). Vamos a aprovechar para prácticar la función de *Rbase* `ifelse`. Por su parte, la función `str_sub` de la librería `stringr` nos permite contar caracteres y elegir en que posición de la cadena cortar para extraer sus valores.  
+
+
+```{r}
+eph_ind$cno <- ifelse(is.na(eph_ind$PP04D_COD), eph_ind$PP11D_COD, eph_ind$PP04D_COD) # Si hay un valor NA en PP04D_COD, se toma el valor de PP11D_COD, de lo contrario se toma el valor de PP04D_COD.  
+
+eph_ind$cno12 <- ifelse(nchar(eph_ind$cno) > 4, str_sub(eph_ind$cno, 1, 2), str_sub(eph_ind$cno, 1, 1))
+eph_ind$cno3 <- ifelse(nchar(eph_ind$cno) > 4, str_sub(eph_ind$cno, 3, 3), str_sub(eph_ind$cno, 2, 2))
+eph_ind$cno4 <- ifelse(nchar(eph_ind$cno) > 4, str_sub(eph_ind$cno, 4, 4), str_sub(eph_ind$cno, 3, 3))
+eph_ind$cno5 <- ifelse(nchar(eph_ind$cno) > 4, str_sub(eph_ind$cno, 5, 5), str_sub(eph_ind$cno, 4, 4))
+
+eph_ind$cno12 <- as.numeric(eph_ind$cno12)
+eph_ind$cno3 <- as.numeric(eph_ind$cno3)
+eph_ind$cno4 <- as.numeric(eph_ind$cno4)
+eph_ind$cno5 <- as.numeric(eph_ind$cno5)
+
+```
+
+Luego podemos convertir a factor las variables extraidas del CNO que nos importan.  
+
+```{r}
+eph_ind <- eph_ind %>%
+  mutate(
+    jerarquia = factor(case_when(
+      cno3 == 0 ~ "Directivo",
+      cno3 == 1 ~ "Cuenta propia",
+      cno3 == 2 ~ "Jefe",
+      cno3 == 3 ~ "Ejecución directa"
+    )),
+    calificacion = factor(case_when(
+      cno5 == 1 ~ "Profesional",
+      cno5 == 2 ~ "Técnico",
+      cno5 == 3 ~ "Operativo",
+      cno5 == 4 ~ "No calificado"
+    ),
+    levels = c("Profesional", "Técnico", "Operativo", "No calificado"),
+  ))
+```
+
+
+A continuación vamos a seguir preparando el resto de las variables, comenzando con las socio-demográficas y de ingresos.  
+ 
+```{r}
+eph_ind <- eph_ind %>% 
+  mutate(
+    sexo = factor(case_when(
+      CH04 == 1 ~ "Varón",
+      CH04 == 2 ~ "Mujer",
+      TRUE ~ NA_character_)),
+    edad = CH06,
+    edad_cat = factor(case_when(
+      CH06 < 35 ~ "Menos de 35",
+      CH06 >= 35 & CH06 < 50 ~ "Entre 35 y 49",
+      CH06 >= 50 & CH06 < 65 ~ "Entre 50 y 64",
+      CH06 >= 65 ~ "65 o más",
+      TRUE ~ NA_character_),
+      levels = c("Menos de 35", "Entre 35 y 49", "Entre 50 y 64", "65 o más")),
+    nivel_educativo = factor(case_when(
+      NIVEL_ED == 1 | NIVEL_ED == 7 ~ "Primario incompleto",
+      NIVEL_ED == 2 ~ "Primario completo",
+      NIVEL_ED == 3 ~ "Secundario incompleto",
+      NIVEL_ED == 4 ~ "Secundario completo",
+      NIVEL_ED == 5 ~ "Superior incompleto",
+      NIVEL_ED == 6 ~ "Superior completo",
+      TRUE ~ NA_character_),
+      levels = c("Primario incompleto", "Primario completo", "Secundario incompleto", "Secundario completo", "Superior incompleto", "Superior completo")),
+    situacion_conyugal = factor(case_when(
+      CH07 == 1 ~ "Unido/a",
+      CH07 == 2 ~ "Casado/a",
+      CH07 == 3 ~ "Separado/a",
+      CH07 == 4 ~ "Viudo/a",
+      CH07 == 5 ~ "Soltero/a",
+      TRUE ~ NA_character_)),
+    decil_IPCF = factor(case_when(
+      DECCFR == 1 ~ "IPCF 1°",
+      DECCFR == 2 ~ "IPCF 2°",
+      DECCFR == 3 ~ "IPCF 3°",
+      DECCFR == 4 ~ "IPCF 4°",
+      DECCFR == 5 ~ "IPCF 5°",
+      DECCFR == 6 ~ "IPCF 6°",
+      DECCFR == 7 ~ "IPCF 7°",
+      DECCFR == 8 ~ "IPCF 8°",
+      DECCFR == 9 ~ "IPCF 9°",
+      DECCFR == 10 ~ "IPCF 10°",
+      TRUE ~ NA_character_
+    )),
+    decil_ITI = factor(case_when(
+      DECINDR == 1 ~ "ITI 1°",
+      DECINDR == 2 ~ "ITI 2°",
+      DECINDR == 3 ~ "ITI 3°",
+      DECINDR == 4 ~ "ITI 4°",
+      DECINDR == 5 ~ "ITI 5°",
+      DECINDR == 6 ~ "ITI 6°",
+      DECINDR == 7 ~ "ITI 7°",
+      DECINDR == 8 ~ "ITI 8°",
+      DECINDR == 9 ~ "ITI 9°",
+      DECINDR == 10 ~ "ITI 10°",
+      TRUE ~ NA_character_
+    )))
+
+```
+
+Por último, vamos convertir a factor las variables que extrajimos de la base de hogar y que nos permiten dar cuenta de diversas estrategias económicas de los hogares.  
+
+```{r}
+eph_ind <- eph_ind %>% 
+  mutate(
+    uso_ahorros = factor(case_when(
+      V13 == 1 ~ "Sí",
+      V13 == 2 ~ "No",
+      TRUE ~ "No")),
+    prestamos_familiares = factor(case_when(
+      V14 == 1 ~ "Sí",
+      V14 == 2 ~ "No",
+      TRUE ~ "No")),
+    prestamos_financieros = factor(case_when(
+      V15 == 1 ~ "Sí",
+      V15 == 2 ~ "No",
+      TRUE ~ "No")),
+    auh = factor(case_when(
+      V5_01 == 1 ~ "Sí",
+      V5_01 == 2 ~ "No",
+      TRUE ~ "No"))
+    )
+```
+
+ 
+## Seleccionando la muestra  
+ 
+Para realizar el ACM vamos a quedarnos únicamente con los hogares con jefe/a activos. También vamos a armar un nuevo objeto *data frame* que solo retenga las variables necesarias para realizar el análisis.
+
+```{r}
+eph_seleccion <- eph_ind %>% 
+  filter(CH03 == 1, ESTADO <= 2) %>% # Filtro sólo Jefes/as activos/as
+  select(jerarquia, calificacion, sexo, edad_cat, nivel_educativo, situacion_conyugal, decil_IPCF, decil_ITI, PONDERA, uso_ahorros, prestamos_familiares, prestamos_financieros, auh)  
+```
+
+## Realizando el análisis de correspondencias múltiples  
+
+La función de la librería `GDAtools` para realizar el ACM es `speMCA`. En esta función se deben especificar las variables activas (aquellas que van a intervenir en la construcción de los factores), los números de factores a retener, el ponderador y, si se quisiera, las categorías que queremos remover del análisis (*excl*).  
+
+Los resultados del ACM se guardarán en el objeto *mca* que crearemos. Para indicar el conjunto de variables activas debemos aclarar el rango de variables con las que trabajaremos: `eph_seleccion[,1:8]`.  
+
+```{r}
+mca <- speMCA(eph_seleccion[,1:8], ncp = 2, row.w = eph_seleccion$PONDERA)
+```
+
+Uno de los primeros resultados que podemos obtener del análisis es la varianza o inercia explicada por cada uno de los factores emergentes. El resultado que nos devuelve la librería esta basado en la corrección de Benzécri.  
+
+```{r}
+modif.rate(mca)$modif
+```
+
+Como puede observarse el primer factor explica el 59%, mientras que el segundo el 15%. Ambos factores juntos acumulan el 74,7% de la inercia total.  
+
+
+## Interpretación gráfica de los factores 
+
+### Nube de individuos
+
+Una primera forma de interpretar los resultados es a través de la representación gráfica de los factores. En este aspecto `GDAtools` es una herramienta muy potente ya que su complementación con `ggplot2` habilita a poder controlar casi todos los aspectos de la salida gráfica.  
+
+Podemos empezar por la nube de individuos, que nos muestra la distribución de los casos en el espacio definido por los factores. Para esto utilizamos la función `ggcloud_ind` sobre el objeto *mca*.  
+
+```{r}
+ggcloud_indiv(mca)
+```
+
+Si consultamos la guía de ayuda de la función (?ggcloud_ind) podremos identificar distintas funciones que nos permiten ir modificando el gráfico. Entre los más relevantes podemos encontrar:  
+
+- `points`: permite seleccionar si queremos gráficar todos los puntos o sólo aquellos con mayor contribución.  
+
+- `axes`: selecciona que factores representar en el gráfico.  
+
+- `col`: colorea los puntos en función de una variables de interés.  
+
+- `density`: generar una capa adicional de densidad.  
+
+Por ejemplo, vamos a indicar que queremos colorear los puntos por sexo y además queremos gráficar las curvas de densidad.  
+
+
+```{r}
+ggcloud_indiv(mca, col = eph_seleccion$sexo, density = "contour") 
+```
+
+### Nube de categorías  
+
+La nube de categorías es la representación gráfica más utilizada en el ACM. En esta representación se muestran las categorías de las variables activas y suplementarias, si las hubiera, lo que permite interpretar como se interrelacionan entre sí. Para graficar la nube de categorías utilizamos la función `ggcloud_variables`.  
+
+Para que este gráfico se represente de manera legible es necesario hacer uso de algunas opciones. Podemos configurar los siguientes atributos del gráfico:  
+- `points`: permite seleccionar si queremos gráficar todas las modalidades o sólo aquellas con mayor contribución.  
+
+- `axes`: selecciona que factores representar en el gráfico.  
+
+- `shapes`: nos permite configurar si queremos que los puntos de las variables tengan distintas formas.  
+
+- `prop`: permite controlar el tamaño de las modalidades en función de su peso, contribución o calidad de la representación.  
+
+- `textsize`: controla el tamaño del texto.  
+
+- `shapesize`: controla el tamaño de los puntos.  
+
+- `vlab`: permite configurar si queremos que se muestren como prefijo las etiquetas de las variables o no.  
+
+- `legend`: controla la presencia y posición de la leyenda.
+
+```{r}
+ggcloud_variables(mca, vlab = F, legend = "none")
+```
+
+En el caso de que necesitemos, por una cuestión de presentación, cambiar el sentido de los ejes, podemos hacerle aplicando previamente la función `flip.mca` e indicando que eje queremos rotar. En este caso no haría falta, pero podemos el eje 1 con la instrucción siguiente. Este cambio quedará guardado en el objeto *mca*.  
+
+```{r eval=FALSE}
+mca <- flip.mca(mca, dim = 1)
+
+```
+
+
+La otra ventaja que presenta `GDAtools` es que la salida gráfica es compatible con `ggplot2`, lo que nos permite modificar el gráfico a nuestro gusto. Por ejemplo, podemos agregarle un título, subtítulo, fuente, cambiar el color de los puntos y las etiquetas y agregar alguna anotación. Directamente, luego de aplicar la función `ggcloud_variables` podemos con el *+* agregar las instrucciones.  
+
+:::{.callout-tip}
+Si quieren explorar otras paletas de colores ya predefinidas, pueden consultar las siguientes librerías: `ggsci`, `ggthemes`, `wesanderson`, `RColorBrewer`.
+:::
+
+
+```{r}
+ggcloud_variables(mca, vlab = F, legend = "none") +
+  labs(title = "Análisis de correspondencias múltiples. Variables activas.",
+       subtitle = "Argentina urbana, tercer trimestre de 2025",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC") + 
+  scale_color_brewer(palette = "Paired") + # Agregamos una paleta de color discreta 
+  annotate("text", x = 1.4, y = 1.4, label = "+ capital \neconómico", size = 4, colour = "red") +
+  annotate("text", x = -1.2, y = 1.4, label = "- capital \neconómico", size = 4, color = "red")
+```
+
+## Interpretación de los factores mediante contribuciones  
+
+El objeto creado mediante la función `speMCA` guarda una serie de información que sirve de ayuda para interpretar las contribuciones que las distintas modalidades a los factores retenidos. Dicha información junto con la representación gráfica nos permitirán una representación más completa sobre las relaciones entre las variables.  
+
+La función principal que utilizaremos es `tabcontrib`. Vamos primero a observar las contribuciones al primer factor. Por *default* sólo las contribuciones superiores al promedio se muestran. Para observar todas las contribuciones debemos indicar la opción `best = F`. Para una mejor visualización vamos a guardar el resultado en el objeto *contrib1*. 
+
+```{r}
+contrib1 <- tabcontrib(mca, dim = 1, best = T)
+
+```
+
+```{r echo=FALSE}
+knitr::kable(tabcontrib(mca, dim=1), row.names=FALSE)
+
+```
+
+  
+Como puede observarse, se muestran solo las modalidades que tienen contribuciones superiores al 2.22%, contribución promedio que surge de dividir 100 / 45 (total de modalidades activas) [@LeRoux.Rouanet2010, 52].  
+
+La tabla de contribuciones nos devuelve:  
+
+- *Calidad de representación*: es el coseno cuadrado de la distancia entre la modalidad y el eje, es decir, e indica qué tan bien está representada una categoría en el espacio factorial considerado.  
+
+- *Contribución*: es el porcentaje de la inercia del factor que se explica por cada categoría. Es decir, indica qué tan importante es cada categoría para la construcción del factor. La tabla calcula la contribución a ambos lados del gráfico, la total y la acumulada para todo el factor.  
+
+- *Contribución de la desviación*: para cada variable se calcula se calcula la contribución de la desviación entre el baricentro de las categorías situadas a un lado y el baricentro de las categorías situadas a otro lado. Es decir, mide cuánto aporta la separación entre las categorías a la construcción del eje.  
+
+En este caso, los valores que arroja la tabla nos muestra que las modalidades que más contribuyen al primer factor son ITI e IPCF 10°decil, nivel educativo superior completo y la calificación profesional (lado positivo) e IPCF 1° decil y no calificado (lado negativo). A su vez, con estás modalidades puede explicarse el 80% de la varianza del factor 1.  
+
+Lo mismo podemos aplicar si necesitamos interpretar el segundo factor.  
+
+```{r}
+contrib2 <- tabcontrib(mca, dim = 2, best = T)
+
+```
+
+```{r echo=FALSE}
+knitr::kable(tabcontrib(mca, dim=2), row.names=FALSE)
+
+```
+
+
+## Variables suplementarias  
+
+Como indicamos al inicio, las variables *suplementarias o ilustrativas* no participan en la construcción activa de los factores pero pueden ser proyectadas en el espacio factorial para enriquecer la interpretación. Para su representación gráfica nos basaremos en lo hecho hasta aquí. Las variables suplementarias funcionaran como una capa adicional de nuestro gráfico, utilizando la función `ggadd_supvars()`. Para ello, primero crearemos un objeto con la nube de variables activas, para luego aplicar dicha función.  
+
+```{r}
+nube_v <- ggcloud_variables(mca, vlab = F, legend = "none", col = "lightgray") # ponemos este color para que las variables activas queden de fondo  
+
+ggadd_supvars(nube_v, mca, vars = eph_seleccion[,10:13]) # agregamos la capa de variables suplementarias
+
+
+```
+
+Posteriormente puede calcularse el *ratio de correlación (eta^2)* que mide el grado de asociación entre las variables suplementarias y los factores.  
+
+```{r}
+dimeta2(mca, eph_seleccion[,10:13])
+
+```
+En este caso podemos ver que las correlaciones son débiles, salvo en el caso de la percepción de la *AUH* que presenta una fuerte asociación con el factor 1.  
+
+Por otro lado, los coeficientes de correlación también pueden calcularse a nivel de las categorías. Por ejemplo, para el eje 1:  
+
+```{r}
+suplementarias <- dimdescr(mca, eph_seleccion[,10:13])
+
+suplementarias$dim.1$categories
+```
+
+
+### Elipsis de concetración  
+
+Siguiendo la propuesta de @LeRoux.Rouanet2010, la técnica de las variables suplementarias es un primer paso para realizar un análisis estructurado de los datos. Sin embargo, presenta limitaciones al enfocarse únicamente en el *punto medio de una subnube de individuos*, ignorando la dispersión. Esta preocupación, por ejemplo, llevó a @Bourdieu2012a en *La Distinción* ha *estilizar* las fracciones de clase a través de contornos del espacio social. De este modo, estos autores proponen el uso de **elipsis de concetración** como forma de representar subnubes de individuos en tantos factores estructurantes.  
+
+Gráficamente, las elipsis de concentración son subnubes de individuos para cada categoría de la variable suplementaria, que tiene un centro en su punto medio e incluye al 86% de los individuos de cada categoría.  
+
+```{r}
+individuos <- ggcloud_indiv(mca, col = "lightgrey")
+
+ggadd_kellipses(individuos, mca, eph_seleccion$auh, label = FALSE, size = .8) +
+  labs(title = "Análisis de correspondencias múltiples. Elipsis de concentración para la variable \nAUH.",
+       subtitle = "Argentina urbana, tercer trimestre de 2025",
+       caption = "Fuente: elaboración propia en base a EPH-INDEC") +
+  guides(colour = guide_legend(title = "AUH"))
+```
+
+Como muestran las elipsis, los hogares que perciben la AUH se encuentran a la izquierda del eje 1 y su dispersión es menor que la hallada entre los hogares que no perciben dicho programa.  
+
+### T-test  
+
+Por último, @LeRoux.Rouanet2010 identifican como *análisis inductivo* en el marco del *ACM* como el pasaje del análisis descriptivo al inferencial. En este sentido, es posible preguntarse si un grupo de individuos (categoría de la variable suplementaria) es similiar a la población de referencia o si tiene un carácter atípico. El **typicality test** (T-test) permite captar el grado de similitud del punto medio de la categoría ilustrativa contra el punto medio de referencia del factor a considerar que considera a la población total. Un p-valor bajo indicaría que la categoría ilustrativa es estadísticamente distinta del promedio poblacional.  
+
+```{r}
+dimtypicality(mca, eph_seleccion[,10:13], dim = c(1,2))
+```
+
+
+
