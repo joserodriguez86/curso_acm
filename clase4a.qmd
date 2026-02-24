@@ -427,5 +427,13 @@ Por último, @LeRoux.Rouanet2010 identifican como *análisis inductivo* en el ma
 dimtypicality(mca, eph_seleccion[,10:13], dim = c(1,2))
 ```
 
+## Guardando los resultados del MCA
+
+Como vamos a retomar luego los resultados del ACM para la realización de un análisis de clúster, vamos a guardar el objeto *mca* y la base *eph_seleccion*. Para esto utilizamos la función `saveRDS` y luego para cargarlo la función `readRDS`.  
+
+```{r}
+saveRDS(mca, "mca.rds")
+saveRDS(eph_seleccion, "eph_seleccion.rds")
+```
 
 

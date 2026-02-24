@@ -1,0 +1,128 @@
+---
+title: "Clase 4b - Análisis de clúster"
+author: "José Rodríguez de la Fuente"
+format: 
+  html:
+    theme: cerulean
+    toc: true
+    toc-title: Contenido
+    number-sections: true
+    embed-resources: true
+    smooth-scroll: true
+    code-overflow: wrap
+    code-copy: hover
+    code-tools: false
+  pdf: 
+    toc: true
+    pdf-engine: xelatex
+    fig-format: png  
+    fig-dpi: 300     
+    fig-width: 8
+    fig-height: 5
+    highlight-style: espresso
+    include-in-header: 
+       text: |
+         \usepackage{fvextra}
+         \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+         \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
+lang: es
+highlight-style: espresso
+lightbox: true
+bibliography: references.bib
+cache: false
+execute:
+  warning: false
+  message: false
+---
+
+
+
+```{r}
+library(tidyverse)
+library(factoextra)
+library(gtsummary)
+library(survey)
+library(GDAtools)
+```
+
+
+```{r}
+mca <- readRDS("mca.rds")
+eph_seleccion <- readRDS("eph_seleccion.rds")
+```
+
+
+```{r}
+d <- dist(mca$ind$coord[, c(1,2)])
+ahc <- hclust(d, "ward.D2")
+
+
+```
+
+```{r}
+# Graficar sin etiquetas
+plot(ahc,
+       labels = FALSE,
+       hang   = -1,
+       main   = "Dendrograma",
+       xlab   = "",
+       sub    = "")
+
+# Agregar rectángulos para los k clusters
+rect.hclust(ahc, k = 4)
+```
+
+```{r}
+fviz_nbclust(mca$ind$coord[, c(1,2)],          # matriz de coordenadas del CA
+             FUN     = hcut,
+             method  = "wss",    # Within Sum of Squares
+             k.max   = 15) +
+  labs(title = "Método del Codo") 
+```
+
+```{r}
+library(cluster)
+
+# Silueta detallada para k=6
+sil <- silhouette(cutree(ahc, k = 6),
+                  dist(mca$ind$coord[, c(1,2)]))
+
+fviz_silhouette(sil) +
+  labs(title = "Silueta - k=6")
+```
+
+
+```{r}
+ahc.plots(ahc, max.cl = 15, type = "dist")
+
+ahc.plots(ahc, distance = d, max.cl = 15, type = "inert")
+
+ahc.plots(ahc, distance = d, max.cl = 15, type = "loss")
+```
+
+```{r}
+cluster <- factor(cutree(ahc, 4))
+
+individuos <- ggcloud_indiv(mca, col = "lightgrey")
+
+ggadd_chulls(individuos, mca, cluster)
+
+```
+
+```{r}
+eph_seleccion <- eph_seleccion %>%
+  cbind(cluster = cluster)
+
+eph_seleccion %>% 
+  svydesign(data = ., ids = ~ 1, weights = ~PONDERA) %>%
+  tbl_svysummary(include = c(jerarquia, calificacion, sexo, edad_cat, nivel_educativo, situacion_conyugal, decil_IPCF, decil_ITI),
+                 statistic = list(
+                   all_continuous() ~ "{mean} ({sd})",
+                   all_categorical() ~ "{n} ({p}%)"),
+                 digits = list(all_categorical() ~ c(0, 1),
+                               all_continuous() ~ c(0, 1)),
+                 missing = "no",
+                 by = cluster)
+
+```
+
