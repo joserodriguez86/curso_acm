@@ -1,0 +1,104 @@
+---
+title: "Clase 4c - Construcción de índices factoriales"
+author: "José Rodríguez de la Fuente"
+format: 
+  html:
+    theme: cerulean
+    toc: true
+    toc-title: Contenido
+    number-sections: true
+    embed-resources: true
+    smooth-scroll: true
+    code-overflow: wrap
+    code-copy: hover
+    code-tools: false
+  pdf: 
+    toc: true
+    pdf-engine: xelatex
+    fig-format: png  
+    fig-dpi: 300     
+    fig-width: 8
+    fig-height: 5
+    highlight-style: espresso
+    include-in-header: 
+       text: |
+         \usepackage{fvextra}
+         \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+         \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
+lang: es
+highlight-style: espresso
+lightbox: true
+bibliography: references.bib
+cache: true
+execute:
+  warning: false
+  message: false
+---
+
+# Construcción de índices a partir de técnicas factoriales  
+
+La ventaja de trabajar con técnicas factoriales es que transforman un conjunto de datos cuantitativos y/o cualitativos en un una serie de factores que resumen la información. Estos factores, provengan de un *Análisis de Componentes Principales* o de un *Análisis de Correspondencias Múltiples*, están conformados por puntajes o coordenadas que posicionan a los casos en el plano.  
+
+Hay una serie de trabajos en los que se aprovecha de las coordenadas factoriales para construir índices en forma automática [@VelezGrajales.etal2015; @OECD2008; @McKenzie2005; @Filmer.Pritchett2001; @Urdinez.etal2016]. Generalmente, estos trabajos, utilizan las coordenadas del primer factor para la construcción del índice ya que es el que mayor varianza explica y debido a que suele distribuir a los casos relativamente clara: en estudios sobre desigualdad, generalmente, puntajes más altos están ligados a mejor posición socioeconómica y puntajes más bajos a situaciones más desventajosas.  
+
+
+# Elaboración del índice en `R` 
+
+## Carga de librerías y datos  
+
+Para este ejercicio vamos a necesitar únicamente activar el `tidyverse`.  
+
+```{r}
+library(tidyverse)
+library(scales)
+```
+
+También vamos a abrir los objetos que hemos guardado con el ACM y la base de EPH.  
+
+```{r}
+mca <- readRDS("mca.rds")
+eph_seleccion <- readRDS("eph_seleccion.rds")
+```
+
+
+## Puntajes factoriales  
+
+Los puntajes factoriales se encuentran guardados en el objeto *mca*. Podemos consultarlos a través de la función `summary`. Veamos los del primer factor.  
+
+
+```{r}
+summary(mca$ind$coord[,1])
+```
+Como puede observarse los puntajes no se encuentran estandarizados y varían de -1.1 a 1.8.  
+
+A continuación, vamos a pegar los puntajes factoriales en la base de la EPH. Como los casos siempre se encuentran ordenados no hace falta usar una variable como id.  
+
+```{r}
+eph_seleccion <- eph_seleccion %>% 
+  cbind(coordenadas = mca$ind$coord[,1])
+```
+
+
+## Estadarización del índice  
+
+Hay varias técnicas para estandarizar un índice. La más común es la llamada propiamente "estandarización" que resulta de convertir la media del índice en 0 y el desvío estándar en 1. La otra forma es lo que podría llamar se "normalización" y consiste en elegir entre que valor máximo y mínimo varía el índice. La formula utilizada sería la siguiente:  
+
+$$
+Índice_i = \frac{F_{i1} - \min(F_1)}{\max(F_1) - \min(F_1)}
+$$
+
+La función `rescale` de la librería `scales` permite rápidamente rescalar el índice indicando el mínimo y máximo que queremos asignar. Vamos a crear ahora dos variables nuevas con ambos formatos de índice.  
+
+```{r}
+eph_seleccion <- eph_seleccion %>% 
+  mutate(indice_estandarizado = scale(coordenadas),
+         indice_normalizado = rescale(coordenadas, to = c(0,1)))
+```
+
+Revisemos, ahora, como se comportan los índices:  
+
+```{r}
+summary(eph_seleccion$indice_estandarizado)
+summary(eph_seleccion$indice_normalizado)
+```
+

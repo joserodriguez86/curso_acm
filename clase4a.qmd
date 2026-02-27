@@ -229,7 +229,7 @@ Para realizar el ACM vamos a quedarnos únicamente con los hogares con jefe/a ac
 ```{r}
 eph_seleccion <- eph_ind %>% 
   filter(CH03 == 1, ESTADO <= 2) %>% # Filtro sólo Jefes/as activos/as
-  select(jerarquia, calificacion, sexo, edad_cat, nivel_educativo, situacion_conyugal, decil_IPCF, decil_ITI, PONDERA, uso_ahorros, prestamos_familiares, prestamos_financieros, auh)  
+  select(jerarquia, calificacion, sexo, edad_cat, nivel_educativo, situacion_conyugal, decil_IPCF, decil_ITI, uso_ahorros, prestamos_familiares, prestamos_financieros, auh, PONDERA, PONDIH)  
 ```
 
 ## Realizando el análisis de correspondencias múltiples  
@@ -379,7 +379,7 @@ Como indicamos al inicio, las variables *suplementarias o ilustrativas* no parti
 ```{r}
 nube_v <- ggcloud_variables(mca, vlab = F, legend = "none", col = "lightgray") # ponemos este color para que las variables activas queden de fondo  
 
-ggadd_supvars(nube_v, mca, vars = eph_seleccion[,10:13]) # agregamos la capa de variables suplementarias
+ggadd_supvars(nube_v, mca, vars = eph_seleccion[,9:12]) # agregamos la capa de variables suplementarias
 
 
 ```
@@ -387,7 +387,7 @@ ggadd_supvars(nube_v, mca, vars = eph_seleccion[,10:13]) # agregamos la capa de 
 Posteriormente puede calcularse el *ratio de correlación (eta^2)* que mide el grado de asociación entre las variables suplementarias y los factores.  
 
 ```{r}
-dimeta2(mca, eph_seleccion[,10:13])
+dimeta2(mca, eph_seleccion[,9:12])
 
 ```
 En este caso podemos ver que las correlaciones son débiles, salvo en el caso de la percepción de la *AUH* que presenta una fuerte asociación con el factor 1.  
@@ -395,7 +395,7 @@ En este caso podemos ver que las correlaciones son débiles, salvo en el caso de
 Por otro lado, los coeficientes de correlación también pueden calcularse a nivel de las categorías. Por ejemplo, para el eje 1:  
 
 ```{r}
-suplementarias <- dimdescr(mca, eph_seleccion[,10:13])
+suplementarias <- dimdescr(mca, eph_seleccion[,9:12])
 
 suplementarias$dim.1$categories
 ```
@@ -424,7 +424,7 @@ Como muestran las elipsis, los hogares que perciben la AUH se encuentran a la iz
 Por último, @LeRoux.Rouanet2010 identifican como *análisis inductivo* en el marco del *ACM* como el pasaje del análisis descriptivo al inferencial. En este sentido, es posible preguntarse si un grupo de individuos (categoría de la variable suplementaria) es similiar a la población de referencia o si tiene un carácter atípico. El **typicality test** (T-test) permite captar el grado de similitud del punto medio de la categoría ilustrativa contra el punto medio de referencia del factor a considerar que considera a la población total. Un p-valor bajo indicaría que la categoría ilustrativa es estadísticamente distinta del promedio poblacional.  
 
 ```{r}
-dimtypicality(mca, eph_seleccion[,10:13], dim = c(1,2))
+dimtypicality(mca, eph_seleccion[,9:12], dim = c(1,2))
 ```
 
 ## Guardando los resultados del MCA

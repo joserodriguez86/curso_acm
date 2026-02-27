@@ -29,21 +29,45 @@ lang: es
 highlight-style: espresso
 lightbox: true
 bibliography: references.bib
-cache: false
+cache: true
 execute:
   warning: false
   message: false
 ---
 
+# Análisis de clúster: introducción  
+
+El *análisis de clúster* o *análisis de clasificación* es una de las técnicas más utilizadas para encontrar agrupamientos en las observaciones a partir de información cuantitativa. En este caso, el análisis de clúster es un método *compañero* del ACM, ya que este, en forma resumida, *transforma* variables cualitativas en cuantitativas.  
+
+Existen diversos métodos de análisis de clúster: jerárquicos, no jerárquicos y mixtos [@Lopez-Roldan.Fachelli2015a]. Particularmente, en este curso, nos centraremos en el tipo de clasificación jerárquica ascendente (CJA). Básicamente consiste en una serie de algoritmos realizan distintas particiones sucesivas y que dan lugar a un nuevo número de grupos en cada etapa. En el caso de de la CJA, a medida que el algoritmo avanza va reduciendo la cantidad de grupos. El objetivo será retener un número de grupos idóneo que permita la maximización de la heterogeneidad entre los mismos.  
+
+Dentro de la CJA, existen diversos algoritmos de agrupamiento, siendo uno de los más utilizados en ciencias sociales el método *ward*. Este algoritmo de agrupación procura que en cada etapa se unan aquellos elementos que supongan una mínima pérdida de inercia [@Lopez-Roldan.Fachelli2015a].  
+
+# Análisis de clúster en `R`  
+## Carga de librerías y datos
+
+Si bien existen diversos paquetes en R para realizar análisis de clúster, suele utilizarse funciones de `R base`. Únicamente necesitaremos instalar las siguientes librerías.  
+
+```{r eval=FALSE}
+install.packages("gtsummary")
+install.packages("survey")
+install.packages("factoextra")
+```
 
 
 ```{r}
 library(tidyverse)
-library(factoextra)
 library(gtsummary)
 library(survey)
 library(GDAtools)
+library(factoextra)
 ```
+
+:::{.callout-tip}
+Es recomendable explorar las librerías `factoExtra` y `dendextend` para la construcción de dendogramas. En este caso, utilizaremos las funciones de `R base` ya que al contar con una gran cantidad de observaciones esas librerías se vuelven lentas en el procesamiento.  
+:::
+
+Los datos que utilizaremos para el análisis de clúster provienen de los resultados guardados del ACM y de la base de datos de la EPH. Será necesario que la asignemos nuevamente a dos nuevos objetos: *mca* y *eph_seleccion*.  
 
 
 ```{r}
@@ -51,17 +75,31 @@ mca <- readRDS("mca.rds")
 eph_seleccion <- readRDS("eph_seleccion.rds")
 ```
 
+## Análisis de clúster jerárquico ascendente (CJA)
+
+Como indicamos anteriormente, los resultados del ACM nos devuelven las coordenadas de cada individuo en un espacio de dimensiones reducidas. Para realizar el análisis de clúster, utilizaremos las coordenadas de los individuos en las dos primeras dimensiones. Dicha información será guardada en el objeto **coordenadas**.  
+
+Posteriormente, con la función `dist()` calcularemos la matriz de distancias entre las observaciones, y con la función `hclust()` realizaremos el análisis de clúster jerárquico ascendente utilizando el método *ward*. El primer proceso se guarda en el objeto **d** y el segundo en el objeto **cja**.
 
 ```{r}
-d <- dist(mca$ind$coord[, c(1,2)])
-ahc <- hclust(d, "ward.D2")
+coordenadas <- mca$ind$coord[, c(1,2)]
 
+d <- dist(coordenadas)
+cja <- hclust(d, "ward.D2")
 
 ```
 
+## Criterios para fijar el número de grupos 
+
+### Dendograma
+
+Ya realizado el análisis de clúster, el siguiente paso es fijar el número de grupos que se retendrán para su posterior análisis. No hay una única forma de hacer esto, por lo que siempre es recomendable basarse en criterios teóricos, prácticos y estadísticos.  
+
+Un primer paso es observar el dendograma, el cual nos muestra la secuencia de agrupamientos y la distancia a la que se producen. Para ello utilizaremos la función `plot()` y `rect.hclust()`, la cual nos permite agregar rectángulos para visualizar los grupos. Vamos a seleccionar que nos marque 4 grupos.
+
 ```{r}
 # Graficar sin etiquetas
-plot(ahc,
+plot(cja,
        labels = FALSE,
        hang   = -1,
        main   = "Dendrograma",
@@ -69,50 +107,112 @@ plot(ahc,
        sub    = "")
 
 # Agregar rectángulos para los k clusters
-rect.hclust(ahc, k = 4)
+rect.hclust(cja, k = 4)
 ```
+Efectivamente, observando el dendograma podemos observar que a partir de 4 grupos la distancia entre los mismos se incrementa considerablemente. Sin embargo, es recomendable utilizar otros criterios para corroborar esta decisión.  
+
+### Criterios estadísticos  
+
+De acuerdo a la bibliografía [@Everitt2011; @Kassambara2017] no existe un único criterio para seleccionar la cantidad de grupos a retener y tampoco es deseable depender solo de una técnica. Al mismo tiempo, siempre se filtra el componente subjetivo y teórico que está guiando la investigación.  
+
+Vamos a calcular algunos estadísticos que nos van a permitir evaluar la calidad de los agrupamientos. Para ello, utilizaremos la función `fviz_nbclust()` del paquete `factoextra`. Esta función nos va a permitir hacer varios gráficos con distintos estadísticos.  
+
+El *ancho promedio de la silueta* (ASW) es un estadístico que se utiliza para evaluar la calidad de los agrupamientos. El ASW se calcula para cada observación y luego se promedia para obtener un valor global. El ASW varía entre -1 y 1, donde valores cercanos a 1 indican que las observaciones están bien agrupadas y valores bajos señalan que los grupos son demasiado heterogéneos internamente.  
+
+Luego, también puede calcularse la *suma de cuadraros intra-cluster* (WSS) que mide cuánta variabilidad hay al interior de los grupos en cada etapa. Valores más altos, nos indicarán una alta variabilidad, mientras que valores más bajos, son preferibles, ya que darán cuenta de una estructura mejor agrupada. Para detectar el mejor número de grupos a retener, se suele utilizar el *método de codo* que resulta de observar el punto (codo) en el que la reducción de la *wss* deja de ser importante.  
+
+Vamos a probar ambos gráficos para encontrar una solución de corte a nuestros clústers. Solo pediremos que nos calcule hasta 10 grupos.  
 
 ```{r}
-fviz_nbclust(mca$ind$coord[, c(1,2)],          # matriz de coordenadas del CA
+fviz_nbclust(mca$ind$coord[, c(1,2)],         
              FUN     = hcut,
-             method  = "wss",    # Within Sum of Squares
-             k.max   = 15) +
-  labs(title = "Método del Codo") 
+             method  = "silhouette",    
+             k.max   = 10) 
+
+fviz_nbclust(mca$ind$coord[, c(1,2)],         
+             FUN     = hcut,
+             method  = "wss",    
+             k.max   = 10) 
+
 ```
+
+Si observamos el gráfico de la *silueta*, el número de grupos que maximiza el ASW es 2, es decir, con dos grupos podríamos diferenciar bien la estructura social que estamos analizando. Sin embargo, a pesar de que el valor del ASW disminuye con las otras particiones, presenta un *pico* en la solución de 4 grupos, para luego si descender.  
+
+En el gráfico de *wss*, el método del codo nos indicaría que luego de un fuerte descenso en la varianza intra-grupos al pasar de 1 a 2 grupos y de 2 a 3, a partir de 4 clústers la pendiente se aplana, pudiéndose identificar el "codo". Es decir, ambos gráficos apuntarían a que **la solución de 4 grupos sería la más apropiada**.
+
+
+### Corte del árbol 
+
+Una vez que hemos decidido el número de grupos a retener, el siguiente paso es realizar el corte del árbol para asignar cada observación a un grupo. Para ello utilizaremos la función `cutree()`, la cual nos devuelve un vector con la asignación de cada observación a un grupo. En este caso, vamos a retener 4 grupos. El resultado lo guardaremos en el objeto **cluster** y, al mismo tiempo, lo convertiremos en factor. Posteriormente, al caracterizarlos, les podremos cambiar el nombre.  
+
 
 ```{r}
-library(cluster)
+cluster <- factor(cutree(cja, 4))
 
-# Silueta detallada para k=6
-sil <- silhouette(cutree(ahc, k = 6),
-                  dist(mca$ind$coord[, c(1,2)]))
-
-fviz_silhouette(sil) +
-  labs(title = "Silueta - k=6")
 ```
+
+Podemos chequear también la cantidad de casos que han quedado en cada uno de los grupos.  
 
 
 ```{r}
-ahc.plots(ahc, max.cl = 15, type = "dist")
-
-ahc.plots(ahc, distance = d, max.cl = 15, type = "inert")
-
-ahc.plots(ahc, distance = d, max.cl = 15, type = "loss")
+table(cluster)
 ```
+
+
+## Caracterización de los grupos
+
+Una primera forma de ver cómo están conformados los grupos surgidos del análisis de clúster es la representación gráfica. La librería que venimos utilizando para la realización del ACM `GDAtools` ofrece una herramienta para ello. La función `ggadd_chulls` nos permite agregar polígonos que representen a los clústers y proyectarlos sobre la nube de individuos o sobre la nube de categorías.  
+
+Los argumentos que debemos pasarle a la función son: el objeto con la nube de individuos (*individuos*), el objeto que tiene el análisis de correspondencias (*mca*) y el objeto que tiene los clústers (*cluster*). Como se señaló anteriormente, podemos editar este gráfico utilizando la gramática de `ggplot2`.  
+
 
 ```{r}
-cluster <- factor(cutree(ahc, 4))
+individuos <- ggcloud_indiv(mca, col = "lightgrey") #creo nuevamente la nube de individuos
 
-individuos <- ggcloud_indiv(mca, col = "lightgrey")
+categorias <- ggcloud_variables(mca, vlab = F, legend = "none", col = "lightgrey")
 
-ggadd_chulls(individuos, mca, cluster)
+ggadd_chulls(individuos, mca, cluster) + #proyecto los clústers
+  labs(title = "Análisis de clúster jerárquico ascendente.",
+       subtitle = "Argentina urbana, tercer trimestre 2025",
+       caption = "Elaboración propia en base a EPH-INDEC.") +
+  theme(legend.position = "none")
 
+ggadd_chulls(categorias, mca, cluster) + #proyecto los clústers
+  labs(title = "Análisis de clúster jerárquico ascendente", 
+       subtitle = "Argentina urbana, tercer trimestre 2025",
+       caption = "Elaboración propia en base a EPH-INDEC.") +
+  theme(legend.position = "none")
 ```
+Ahora bien, para caracterizar a los grupos a partir de las variables que utilizamos para su construcción, necesitaremos *pegar* el objeto **cluster** en la base **eph_seleccion**. De ese modo, tendremos en la base última columna con el clúster asignado para cada caso. Vamos a usar la función de `Rbase` llamada `cbind` que permite sumar una nueva columna y asignarle el nombre. Los datos siempre se encuentran ordenados.  
+
 
 ```{r}
 eph_seleccion <- eph_seleccion %>%
   cbind(cluster = cluster)
 
+```
+
+Ya estamos en condiciones de caracterizar a los grupos. En este sentido, hay diferentes formas de hacerlo. Podemos hacerlo cruzando cada variable contra los clústers o también realizar una primera aproximación bien completa desde donde luego podamos profundizar.  
+
+Vamos a utilizar la función `tbl_svysummary()` del paquete `gtsummary`, la cual nos permite obtener tablas de resumen para variables continuas y categóricas. La ventaja de esta función es que nos permite utilizar ponderación. En este caso, vamos a incluir las variables que utilizamos para el análisis de clúster. Vamos a indicar paso a paso que los parámetros que debemos configurar:  
+
+- `svydesign`: Viene de la librería `survey`. Lo vamos a declarar al principio y básicamente indica el ponderador que estamos utilizando.  
+
+- `include`: Aquí vamos a incluir las variables que queremos analizar.  
+
+- `statistic`: Aquí vamos a indicar cómo queremos que se muestren las estadísticas para cada tipo de variable. Para las variables continuas, vamos a mostrar la media y la desviación estándar, mientras que para las variables categóricas, vamos a mostrar el conteo y el porcentaje. Se pueden pedir distintos coeficientes.  
+
+- `digits`: Aquí vamos a indicar cuántos dígitos queremos mostrar para cada tipo de variable. Para las variables continuas, vamos a mostrar un dígito, mientras que para las variables categóricas, vamos a mostrar cero dígitos para el conteo y un dígito para el porcentaje.  
+
+- `missing`: Aquí vamos a indicar cómo queremos manejar los valores faltantes. En este caso, vamos a excluirlos del análisis.  
+
+- `by`: Aquí vamos a indicar la variable por la cual queremos agrupar los resultados. En este caso, vamos a agrupar por la variable *cluster*.  
+
+- `add_overall()`: Esta función nos permite agregar una columna con los resultados generales, es decir, sin agrupar por clúster. Esto nos servirá para comparar.  
+
+- `add_p()`: Esta función nos permite agregar una columna con los valores p de las pruebas estadísticas que se realizan para comparar los grupos. Esto nos ayudará a identificar si hay diferencias significativas entre los grupos para cada variable.
+
+```{r}
 eph_seleccion %>% 
   svydesign(data = ., ids = ~ 1, weights = ~PONDERA) %>%
   tbl_svysummary(include = c(jerarquia, calificacion, sexo, edad_cat, nivel_educativo, situacion_conyugal, decil_IPCF, decil_ITI),
@@ -122,7 +222,26 @@ eph_seleccion %>%
                  digits = list(all_categorical() ~ c(0, 1),
                                all_continuous() ~ c(0, 1)),
                  missing = "no",
-                 by = cluster)
+                 by = cluster) %>% 
+  add_overall() %>%
+  add_p()
+  
 
+
+```
+
+¿Cómo podríamos con esta información caracterizar a los clústers?  
+
+```{r}
+cluster <- factor(cluster, labels = c("Precariado", "Clase trabajadora", "Clase media", "Elite"))
+
+ggadd_chulls(individuos, mca, cluster,
+             label.size = 4) + 
+  labs(title = "Análisis de clúster jerárquico ascendente.",
+       subtitle = "Argentina urbana, tercer trimestre 2025",
+       caption = "Elaboración propia en base a EPH-INDEC.") +
+  theme(legend.position = "none") +
+  ggsci::scale_color_futurama() +
+  ggsci::scale_fill_futurama()
 ```
 
