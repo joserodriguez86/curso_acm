@@ -26,6 +26,7 @@ Acceso directo a los contenidos de cada clase:
 | 3b | Visualización de resultados. Gráficos | [Abrir](https://joserodriguez86.github.io/curso_acm/clase3b.html) |  
 | 4a | Análisis de correspondencias múltiples | [Abrir](https://joserodriguez86.github.io/curso_acm/clase4a.html) |
 | 4b | Análisis de clúster | [Abrir](https://joserodriguez86.github.io/curso_acm/clase4b.html) |
+| 4c | Construcción de índices factoriales | [Abrir](https://joserodriguez86.github.io/curso_acm/clase4c.html) |
 
 ---
 
