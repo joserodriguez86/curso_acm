@@ -173,6 +173,7 @@ Para este apartado utilizaremos la base de individuos de la EPH. Vamos a descarg
 eph_ind_225 <- get_microdata(year = 2025, period = 2, type = "individual")
 ```
 
+
 ## Uso de ponderadores para las estimaciones  
 
 Generalmente las encuestas de hogares o de individuos como la *EPH* o el *Latinobarómetro*, al ser relevamientos realizados con muestreos probabilísticos, utilizan ponderadores para corregir el sesgo de la muestra. Es decir, permiten ajustar en los casos en que determinadas poblaciones se encuentran sub-representadas o sobre-representadas en la muestra. Los ponderadores son variables de tipo numéricas que *multiplican* el valor de cada caso para alcanzar una estimación más cercana a la realidad sobre la que se quiere investigar.  

@@ -46,7 +46,6 @@ Para este apartado utilizaremos la base de individuos de la EPH de 2025.
 library(eph)
 
 eph_ind <- get_microdata(year = 2025, period = 2, type = "individual") 
-eph_hog <- get_microdata(year = 2025, period = 2, type = "hogar")
 
 
 ```
@@ -226,7 +225,7 @@ Para resolver estos problemas, `tidyr` nos ofrece las funciones `pivot_longer()`
 
 Hasta aquí hemos trabajado con tablas de frecuencias y con tablas de contingencia. Si lo que necesitamos es explorar los datos para conocer la información que disponemos, probar hipótesis o realizar análisis descriptivos, con las salidas gráficas que nos ofrece `RStudio` nos bastaría. Sin embargo, a veces, necesitamos presentar los resultados en informes, documentos o presentaciones. Para ello, necesitamos exportar los resultados a formatos comúnmente como xlsx, docx, pdf, etc.
 
-En esta sección vamos a mostrar algunas alternativas para exportar los resultados a una hoja de calculo (xlsx) y a un documento de texto (docx). No obstante, existen muchas otras opciones de exportación que pueden explorarse y que se complementan muy bien con el análisis estadístico en `RStudio`, tales como html o pdf.
+En esta sección vamos a mostrar algunas alternativas para exportar los resultados a una hoja de cálculo (xlsx) y a un documento de texto (docx). No obstante, existen muchas otras opciones de exportación que pueden explorarse y que se complementan muy bien con el análisis estadístico en `RStudio`, tales como html o pdf.
 
 ::: {.callout-tip title="Recomendación"}
 A lxs interesadxs les recomendamos revisar los sistemas de publicación científica tales como [`Quarto`](https://quarto.org/){target="_blank"} o [`R Markdown`](https://rmarkdown.rstudio.com/){target="_blank"}. Ambos sistemas permiten la integración de código `R` con texto, gráficos y tablas, y la exportación a distintos formatos de salida, permitiendo la creación de **documentos reproducibles**.  
@@ -236,7 +235,7 @@ A lxs interesadxs les recomendamos revisar los sistemas de publicación científ
 
 ## Exportando a xslx
 
-Para exportar los resultados a una hoja de cálculo, utilizaremos la librería `openxlsx`. Esta librería nos permite exportar los resultados a un archivo de `Excel`, añadir hojas de calculo, modificar el formato de las celdas, entre otras cosas. Vamos a revisar las funciones más sencillas del paquete. Para ello, crearemos un objeto con la tabla cruzada que creamos en la sección anterior. Vamos a crear una carpeta dentro del proyecto llamada *resultados* para guardar allí las tablas y gráficos generados.  
+Para exportar los resultados a una hoja de cálculo, utilizaremos la librería `openxlsx`. Esta librería nos permite exportar los resultados a un archivo de `Excel`, añadir hojas de cálculo, modificar el formato de las celdas, entre otras cosas. Vamos a revisar las funciones más sencillas del paquete. Para ello, crearemos un objeto con la tabla cruzada que creamos en la sección anterior. Vamos a crear una carpeta dentro del proyecto llamada *resultados* para guardar allí las tablas y gráficos generados.  
 
 
 ```{r eval=FALSE}
@@ -329,7 +328,7 @@ La librería incluye muchísimas funciones para editar y automatizar el formato 
 Recomendamos revisar la página de la librería [`flextable`](https://ardata-fr.github.io/flextable-book/index.html){target="_blank"} para conocer las potencialidades que provee.
 :::
 
-Vamos a probar ahora agregar en la primera columna la etiqueta de la variable `disciplina_f` y en en una fila superior la etiqueta de la variable `genero_f`. Exploraremos algunas opciones de la función como `set_header_labels()`, `add_header_row()`, `add_footer_lines()`, `set_caption()`, `theme_vanilla()`, `align()` y `autofit()`. El resultado lo guardaremos en un objeto llamado `tabla_doc`.
+Vamos a probar ahora agregar en la primera columna la etiqueta de la variable `empleo_f` y en en una fila superior la etiqueta de la variable `region_f`. Exploraremos algunas opciones de la función como `set_header_labels()`, `add_header_row()`, `add_footer_lines()`, `set_caption()`, `theme_vanilla()`, `align()` y `autofit()`. El resultado lo guardaremos en un objeto llamado `tabla_doc`.
 
 ```{r}
 tabla_doc <- flextable(tabla2) %>% 

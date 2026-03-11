@@ -3241,8 +3241,7 @@ margin: 0 0 !important;
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(eph)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>eph_ind <span class="ot">&lt;-</span> <span class="fu">get_microdata</span>(<span class="at">year =</span> <span class="dv">2025</span>, <span class="at">period =</span> <span class="dv">2</span>, <span class="at">type =</span> <span class="st">&quot;individual&quot;</span>) </span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>eph_hog <span class="ot">&lt;-</span> <span class="fu">get_microdata</span>(<span class="at">year =</span> <span class="dv">2025</span>, <span class="at">period =</span> <span class="dv">2</span>, <span class="at">type =</span> <span class="st">&quot;hogar&quot;</span>)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>eph_ind <span class="ot">&lt;-</span> <span class="fu">get_microdata</span>(<span class="at">year =</span> <span class="dv">2025</span>, <span class="at">period =</span> <span class="dv">2</span>, <span class="at">type =</span> <span class="st">&quot;individual&quot;</span>) </span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Por otro lado, vamos a trabajar con las siguientes variables que transformaremos en factor:</p>
 <div class="cell">
@@ -3590,7 +3589,7 @@ Patagonia                   72.18    27.74  0.08</code></pre>
 <section id="exportando-los-resultados" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Exportando los resultados</h1>
 <p>Hasta aquí hemos trabajado con tablas de frecuencias y con tablas de contingencia. Si lo que necesitamos es explorar los datos para conocer la información que disponemos, probar hipótesis o realizar análisis descriptivos, con las salidas gráficas que nos ofrece <code>RStudio</code> nos bastaría. Sin embargo, a veces, necesitamos presentar los resultados en informes, documentos o presentaciones. Para ello, necesitamos exportar los resultados a formatos comúnmente como xlsx, docx, pdf, etc.</p>
-<p>En esta sección vamos a mostrar algunas alternativas para exportar los resultados a una hoja de calculo (xlsx) y a un documento de texto (docx). No obstante, existen muchas otras opciones de exportación que pueden explorarse y que se complementan muy bien con el análisis estadístico en <code>RStudio</code>, tales como html o pdf.</p>
+<p>En esta sección vamos a mostrar algunas alternativas para exportar los resultados a una hoja de cálculo (xlsx) y a un documento de texto (docx). No obstante, existen muchas otras opciones de exportación que pueden explorarse y que se complementan muy bien con el análisis estadístico en <code>RStudio</code>, tales como html o pdf.</p>
 <div class="callout callout-style-default callout-tip callout-titled" title="Recomendación">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -3612,7 +3611,7 @@ Recomendación
 </div>
 <section id="exportando-a-xslx" class="level2" data-number="2.1">
 <h2 data-number="2.1" class="anchored" data-anchor-id="exportando-a-xslx"><span class="header-section-number">2.1</span> Exportando a xslx</h2>
-<p>Para exportar los resultados a una hoja de cálculo, utilizaremos la librería <code>openxlsx</code>. Esta librería nos permite exportar los resultados a un archivo de <code>Excel</code>, añadir hojas de calculo, modificar el formato de las celdas, entre otras cosas. Vamos a revisar las funciones más sencillas del paquete. Para ello, crearemos un objeto con la tabla cruzada que creamos en la sección anterior. Vamos a crear una carpeta dentro del proyecto llamada <em>resultados</em> para guardar allí las tablas y gráficos generados.</p>
+<p>Para exportar los resultados a una hoja de cálculo, utilizaremos la librería <code>openxlsx</code>. Esta librería nos permite exportar los resultados a un archivo de <code>Excel</code>, añadir hojas de cálculo, modificar el formato de las celdas, entre otras cosas. Vamos a revisar las funciones más sencillas del paquete. Para ello, crearemos un objeto con la tabla cruzada que creamos en la sección anterior. Vamos a crear una carpeta dentro del proyecto llamada <em>resultados</em> para guardar allí las tablas y gráficos generados.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;openxlsx&quot;</span>)</span></code><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -3708,7 +3707,7 @@ Recomendación
 <p>Recomendamos revisar la página de la librería <a href="https://ardata-fr.github.io/flextable-book/index.html" target="_blank"><code>flextable</code></a> para conocer las potencialidades que provee.</p>
 </div>
 </div>
-<p>Vamos a probar ahora agregar en la primera columna la etiqueta de la variable <code>disciplina_f</code> y en en una fila superior la etiqueta de la variable <code>genero_f</code>. Exploraremos algunas opciones de la función como <code>set_header_labels()</code>, <code>add_header_row()</code>, <code>add_footer_lines()</code>, <code>set_caption()</code>, <code>theme_vanilla()</code>, <code>align()</code> y <code>autofit()</code>. El resultado lo guardaremos en un objeto llamado <code>tabla_doc</code>.</p>
+<p>Vamos a probar ahora agregar en la primera columna la etiqueta de la variable <code>empleo_f</code> y en en una fila superior la etiqueta de la variable <code>region_f</code>. Exploraremos algunas opciones de la función como <code>set_header_labels()</code>, <code>add_header_row()</code>, <code>add_footer_lines()</code>, <code>set_caption()</code>, <code>theme_vanilla()</code>, <code>align()</code> y <code>autofit()</code>. El resultado lo guardaremos en un objeto llamado <code>tabla_doc</code>.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>tabla_doc <span class="ot">&lt;-</span> <span class="fu">flextable</span>(tabla2) <span class="sc">%&gt;%</span> </span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_header_labels</span>(<span class="at">empleo_f =</span> <span class="st">&quot;Tipo de inserción&quot;</span>) <span class="sc">%&gt;%</span> <span class="co"># coloco la etiqueta de la variable empleo_f en la primera columna</span></span>
