@@ -47,7 +47,7 @@ A diferencia de otras técnicas clásicas de análisis de variables (regresión,
 ![Nubes de individuos y nube de categorías. Fuente: @LeRoux.Rouanet2010](imagenes/graficos_acm.png)  
 
 
-Los factores que surgen de la reducción producida sobre el espacio de propiedades de lasvariables originales permiten una explicación más parsimoniosa del problema a abordar. El primer factor-eje resume la mayor parte de la inercia (varianza) presentada entre los individuos, siendo éste el más relevante ya que es el que mejor se aproxima a la nube de puntos original. El segundo factor-eje, es independiente del primero y da cuenta de las diferenciaciones residuales que el primer factor no pudo representar y así sucesivamente con el resto de los  factores [@Baranger2009]. Si bien no hay un acuerdo respecto a cuantos factores retener para el análisis, es recomendable basarse en aquellos que acumulan la mayor parte de la inercia explicada (generalmente un 70% o más de la varianza).  
+Los factores que surgen de la reducción producida sobre el espacio de propiedades de las variables originales permiten una explicación más parsimoniosa del problema a abordar. El primer factor-eje resume la mayor parte de la inercia (varianza) presentada entre los individuos, siendo éste el más relevante ya que es el que mejor se aproxima a la nube de puntos original. El segundo factor-eje, es independiente del primero y da cuenta de las diferenciaciones residuales que el primer factor no pudo representar y así sucesivamente con el resto de los  factores [@Baranger2009]. Si bien no hay un acuerdo respecto a cuantos factores retener para el análisis, es recomendable basarse en aquellos que acumulan la mayor parte de la inercia explicada (generalmente un 70% o más de la varianza).  
 
 Por otro lado, el ACM permite la incorporación de variables denominadas *suplementarias* o  *ilustrativas* que no intervienen en la construcción de los factores (como sí lo hacen las variables  activas) pero que permiten su proyección en el plano factorial y, por ende, el enriquecimiento  del análisis [@Adaszko2009; @LeRoux.Rouanet2010]. Según Bourdieu, las variables  suplementarias permiten “dar fuerza” a la demostración de que las variables activas son interpretables en términos de otras (en el caso de “La Distinción”, algunas variables de estatus social), pudiéndose hacer un uso explicativo del *ACM* [@Rouanet.etal2011].
 
@@ -95,21 +95,29 @@ eph_ind <- eph_ind %>%
 ```
 
 
-Ahora vamos a comenzar a construir las variables necesarias sobre las cuales realizaremos el ACM. Vamos a utilizar como guía la selección de algunos indicadores planteada en @Gutierrez.etal2021. Comencemos con las variables sociolaborales. La información laboral se identifica en la EPH en las variables *PP04D_COD* para los ocupados y en la *PP11D_COD* para los desocupados (última ocupación). Vamos a crear una única variable que se llame *CNO* donde guardemos la información de ambas situaciones y luego vamos a extraer las cuatro dimensiones (Carácter ocupacional, Jerarquía, Tecnología y Calificación). Vamos a aprovechar para prácticar la función de *Rbase* `ifelse`. Por su parte, la función `str_sub` de la librería `stringr` nos permite contar caracteres y elegir en que posición de la cadena cortar para extraer sus valores.  
+Ahora vamos a comenzar a construir las variables necesarias sobre las cuales realizaremos el ACM. Vamos a utilizar como guía la selección de algunos indicadores planteada en @Gutierrez.etal2021. Comencemos con las variables sociolaborales. La información laboral se identifica en la EPH en las variables *PP04D_COD* para los ocupados y en la *PP11D_COD* para los desocupados (última ocupación). Vamos a crear una única variable que se llame *CNO* donde guardemos la información de ambas situaciones y luego vamos a extraer las cuatro dimensiones (Carácter ocupacional, Jerarquía, Tecnología y Calificación). Vamos a aprovechar para practicar la función `case_when`. Por su parte, la función `str_sub` de la librería `stringr` nos permite contar caracteres y elegir en que posición de la cadena cortar para extraer sus valores.  
 
 
 ```{r}
-eph_ind$cno <- ifelse(is.na(eph_ind$PP04D_COD), eph_ind$PP11D_COD, eph_ind$PP04D_COD) # Si hay un valor NA en PP04D_COD, se toma el valor de PP11D_COD, de lo contrario se toma el valor de PP04D_COD.  
 
-eph_ind$cno12 <- ifelse(nchar(eph_ind$cno) > 4, str_sub(eph_ind$cno, 1, 2), str_sub(eph_ind$cno, 1, 1))
-eph_ind$cno3 <- ifelse(nchar(eph_ind$cno) > 4, str_sub(eph_ind$cno, 3, 3), str_sub(eph_ind$cno, 2, 2))
-eph_ind$cno4 <- ifelse(nchar(eph_ind$cno) > 4, str_sub(eph_ind$cno, 4, 4), str_sub(eph_ind$cno, 3, 3))
-eph_ind$cno5 <- ifelse(nchar(eph_ind$cno) > 4, str_sub(eph_ind$cno, 5, 5), str_sub(eph_ind$cno, 4, 4))
-
-eph_ind$cno12 <- as.numeric(eph_ind$cno12)
-eph_ind$cno3 <- as.numeric(eph_ind$cno3)
-eph_ind$cno4 <- as.numeric(eph_ind$cno4)
-eph_ind$cno5 <- as.numeric(eph_ind$cno5)
+eph_ind <- eph_ind %>%
+  mutate(
+    # Si hay un valor NA en PP04D_COD, se toma el valor de PP11D_COD, de lo contrario se toma el valor de PP04D_COD.
+    cno = case_when(is.na(PP04D_COD) ~ PP11D_COD,
+                    TRUE ~ PP04D_COD),
+    cno12 = case_when(nchar(cno) > 4 ~ str_sub(cno, 1, 2),
+                      TRUE ~ str_sub(cno, 1, 1)),
+    cno3 = case_when(nchar(cno) > 4 ~ str_sub(cno, 3, 3),
+                     TRUE ~ str_sub(cno, 2, 2)),
+    cno4 = case_when(nchar(cno) > 4 ~ str_sub(cno, 4, 4),
+                     TRUE ~ str_sub(cno, 3, 3)),
+    cno5 = case_when(nchar(cno) > 4 ~ str_sub(cno, 5, 5),
+                     TRUE ~ str_sub(cno, 4, 4)),
+    # pasar a numérico
+    cno12 = as.numeric(cno12),
+    cno3  = as.numeric(cno3),
+    cno4  = as.numeric(cno4),
+    cno5  = as.numeric(cno5))
 
 ```
 
@@ -285,6 +293,7 @@ ggcloud_indiv(mca, col = eph_seleccion$sexo, density = "contour")
 La nube de categorías es la representación gráfica más utilizada en el ACM. En esta representación se muestran las categorías de las variables activas y suplementarias, si las hubiera, lo que permite interpretar como se interrelacionan entre sí. Para graficar la nube de categorías utilizamos la función `ggcloud_variables`.  
 
 Para que este gráfico se represente de manera legible es necesario hacer uso de algunas opciones. Podemos configurar los siguientes atributos del gráfico:  
+
 - `points`: permite seleccionar si queremos gráficar todas las modalidades o sólo aquellas con mayor contribución.  
 
 - `axes`: selecciona que factores representar en el gráfico.  
@@ -351,7 +360,7 @@ Como puede observarse, se muestran solo las modalidades que tienen contribucione
 
 La tabla de contribuciones nos devuelve:  
 
-- *Calidad de representación*: es el coseno cuadrado de la distancia entre la modalidad y el eje, es decir, e indica qué tan bien está representada una categoría en el espacio factorial considerado.  
+- *Calidad de representación*: es el coseno cuadrado de la distancia entre la modalidad y el eje, es decir, indica qué tan bien está representada una categoría en el espacio factorial considerado.  
 
 - *Contribución*: es el porcentaje de la inercia del factor que se explica por cada categoría. Es decir, indica qué tan importante es cada categoría para la construcción del factor. La tabla calcula la contribución a ambos lados del gráfico, la total y la acumulada para todo el factor.  
 
