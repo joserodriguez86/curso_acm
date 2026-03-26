@@ -64,7 +64,7 @@ library(factoextra)
 ```
 
 :::{.callout-tip}
-Es recomendable explorar las librerías `factoExtra` y `dendextend` para la construcción de dendogramas. En este caso, utilizaremos las funciones de `R base` ya que al contar con una gran cantidad de observaciones esas librerías se vuelven lentas en el procesamiento.  
+Es recomendable explorar las librerías `factoExtra` y `dendextend` para la construcción de dendogramas. En este caso, utilizaremos las funciones de `R base` ya que al contar con una gran cantidad de observaciones esas librerías se vuelven lentas en el procesamiento. Un ejemplo de su uso pueden encontrarlo en este análisis sobre la discografía de [Spinetta](https://rpubs.com/josedelafuente/609181){target="_blank"} 
 :::
 
 Los datos que utilizaremos para el análisis de clúster provienen de los resultados guardados del ACM y de la base de datos de la EPH. Será necesario que la asignemos nuevamente a dos nuevos objetos: *mca* y *eph_seleccion*.  
